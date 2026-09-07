@@ -25,7 +25,7 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
     modality_info = detect_modality(img)
     is_sar = modality_info["is_radar"]
     spatial_meta = modality_info.get("spatial_metrics", {})
-    total_area_km2 = spatial_meta.get("total_area_km2", round((total_pixels * 100) / 1e6, 3))
+    total_area_km2 = spatial_meta.get("total_area_km2")
     
     # Keep copy of raw raster for Canvas toggling
     raw_image_url = array_to_base64_png(img)
@@ -42,19 +42,19 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
         water_mask = (gray < 42)
         water_pixels = int(np.sum(water_mask))
         water_pct = round((water_pixels / total_pixels) * 100, 2)
-        water_area_km2 = round((water_pct / 100) * total_area_km2, 3)
+        water_area_km2 = None
         
         # 2. Dihedral Double-Bounce: Urban / Corner Reflector Structures (sigma0 > -4 dB)
         urban_mask = (gray > 140)
         urban_pixels = int(np.sum(urban_mask))
         builtup_pct = round((urban_pixels / total_pixels) * 100, 2)
-        builtup_area_km2 = round((builtup_pct / 100) * total_area_km2, 3)
+        builtup_area_km2 = None
         
         # 3. Diffuse Scatter: Terrain / Vegetated Soil (sigma0 ~ -12 dB)
         terrain_mask = (~water_mask) & (~urban_mask)
         terrain_pixels = int(np.sum(terrain_mask))
         terrain_pct = round((terrain_pixels / total_pixels) * 100, 2)
-        terrain_area_km2 = round((terrain_pct / 100) * total_area_km2, 3)
+        terrain_area_km2 = None
         
         breakdown = {
             "Water Body / River Network (Low Backscatter / Specular)": water_pct,
@@ -66,29 +66,27 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
         # Formulate scientifically precise radar domain answer
         if "water" in q_lower or "river" in q_lower or "lake" in q_lower:
             answer = (
-                f"A prominent water body / river corridor constitutes **{water_pct}%** ({water_area_km2} km²) of the observed scene.\n\n"
-                f"**Physical Radar Basis:** In this Sentinel-1 C-SAR acquisition, the water channel appears as a distinctive dark corridor "
-                f"caused by low microwave backscatter (specular reflection away from the satellite antenna, mean σ⁰ ≈ -21.4 dB).\n\n"
-                f"**Ambiguity & Physical Limitations:** Smooth surface water behaves as a specular reflector under calm wind conditions. "
-                f"Other smooth surfaces (such as airport runways, dry flat sand, or radar shadow) can mimic this dark signature. Conversely, "
-                f"wind-roughened water surfaces with capillary waves may appear brighter due to Bragg scattering.\n\n"
-                f"**Resolution Basis:** Calculated over 512×512 raster using nominal 10.0m Ground Sampling Distance (10m/px, 26.214 km² total coverage)."
+                f"A low-intensity water-like region constitutes **{water_pct}% of the scene pixels**.\n\n"
+                f"**Image evidence:** The prototype identifies dark regions using an intensity threshold (< 42 on the uploaded 8-bit raster). "
+                f"This is a SAR-like heuristic; it is not calibrated Sentinel-1 sigma-naught (σ⁰).\n\n"
+                f"**Physical limitation:** Smooth water can produce low radar return, but other dark surfaces can look similar. "
+                f"Sensor identity, polarization, GSD and physical area are not verified from a PNG/JPEG upload.
             )
         elif "urban" in q_lower or "building" in q_lower or "structure" in q_lower:
             answer = (
-                f"High-backscatter structural infrastructure covers **{builtup_pct}%** ({builtup_area_km2} km²) of the scene.\n\n"
-                f"**Physical Radar Basis:** Exhibiting elevated backscatter (mean σ⁰ ≈ +2.6 dB) consistent with dihedral corner-reflector interactions "
-                f"between vertical structural walls and the horizontal ground plane (cardinal orientation).\n\n"
-                f"**Resolution Basis:** Nominal Ground Sampling Distance GSD = 10.0 m/pixel (total scene extent: 26.214 km²)."
+                f"High-intensity structural-like regions cover **{builtup_pct}% of the scene pixels**.\n\n"
+                f"**Image evidence:** The prototype uses an intensity threshold (> 140) as a SAR-like high-return heuristic. "
+                f"It does not claim calibrated σ⁰ or a verified Sentinel-1 acquisition.\n\n"
+                f"**Spatial limitation:** Physical area and GSD are unavailable unless the uploaded source contains trusted geospatial metadata."
             )
         else:
             answer = (
-                f"The scene is predominantly **{dominant_class[0]}** ({dominant_class[1]}% area / {water_area_km2 if 'Water' in dominant_class[0] else terrain_area_km2} km²).\n\n"
-                f"**Radar Backscatter Partition:**\n"
-                f"- Low Backscatter (Specular Water): **{water_pct}%** ({water_area_km2} km²)\n"
-                f"- Intermediate Diffuse Return (Vegetated Terrain): **{terrain_pct}%** ({terrain_area_km2} km²)\n"
-                f"- Elevated Corner-Reflector Return (Structures): **{builtup_pct}%** ({builtup_area_km2} km²)\n\n"
-                f"**Resolution Basis:** Nominal Ground Sampling Distance GSD = 10.0 m/pixel (total scene extent: 26.214 km²)."
+                f"The scene is predominantly **{dominant_class[0]}** (**{dominant_class[1]}% of scene pixels**).\n\n"
+                f"**Intensity partition:**\n"
+                f"- Low-intensity water-like pixels: **{water_pct}%**\n"
+                f"- Intermediate terrain/canopy-like pixels: **{terrain_pct}%**\n"
+                f"- High-intensity structure-like pixels: **{builtup_pct}%**\n\n"
+                f"Physical area, GSD, sensor identity and calibrated backscatter are not available from this PNG/JPEG upload."
             )
                 
         # Colorized radar overlay (Cyan for water, Orange for structures)
@@ -97,8 +95,8 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
         overlay[urban_mask] = (0.4 * overlay[urban_mask] + 0.6 * np.array([255, 170, 0])).astype(np.uint8)
         
         guidance = {
-            "detected_sensor": "Synthetic Aperture Radar (Sentinel-1 C-Band)",
-            "sensor_advantages": "All-weather cloud penetration and sharp surface dielectric delineation.",
+            "detected_sensor": "SAR-like grayscale raster (sensor not verified)",
+            "sensor_advantages": "Low-intensity/high-intensity image patterns can be used as SAR-like prototype evidence; true all-weather SAR behavior requires verified SAR source data.",
             "missing_modality_alert": (
                 "Single-band SAR lacks multispectral optical bands (Red/NIR). To compute photosynthetic vegetation vigor "
                 "(NDVI) or classify green crop species, upload an Optical (Sentinel-2) companion image to execute Cross-Modal Fusion."
@@ -109,29 +107,21 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
         # Deep SAR Engineering Telemetry
         enl = round(float((mean_intensity / (std_intensity + 1e-5)) ** 2), 2)
         engineering_telemetry = {
-            "sensor_type": "Active Microwave Synthetic Aperture Radar (SAR)",
-            "frequency_band": "C-band (5.405 GHz, λ ≈ 5.6 cm)",
-            "polarization": "Single Co-polarized (VV Amplitude)",
-            "equivalent_number_of_looks_enl": enl,
-            "speckle_coefficient_cv": round(std_intensity / (mean_intensity + 1e-5), 3),
-            "calibrated_backscatter_sigma0_db": {
-                "specular_water_mean": -21.4,
-                "specular_threshold_limit": -18.0,
-                "diffuse_terrain_mean": -11.8,
-                "double_bounce_structure_mean": 2.6,
-                "double_bounce_threshold_limit": -6.0
-            },
-            "hydrological_geometry": {
-                "water_surface_area_km2": water_area_km2,
-                "water_surface_hectares": round(water_area_km2 * 100, 1),
-                "estimated_channel_length_km": round(float(w * 0.010 * 1.25), 2),
-                "mean_channel_width_m": round(float((water_pixels / h) * 10.0), 1),
-                "sinuosity_index": 1.34
+            "sensor_type": "RGB-like optical raster (sensor not verified)",
+            "spectral_bands": "R, G, B channels only",
+            "radiometric_resolution": "8-bit image values; not calibrated reflectance",
+            "ground_sampling_distance": None,
+            "spectral_indices": None,
+            "rgb_heuristics": {
+                "green_red_ratio": round(float(np.mean(g) / (np.mean(r) + 1e-5)), 2),
+                "blue_green_ratio": round(float(np.mean(b) / (np.mean(g) + 1e-5)), 2)
             },
             "class_area_metrics": {
-                "Water Body / River Network": {"pct": water_pct, "area_km2": water_area_km2, "pixels": water_pixels},
-                "Rough Terrain & Canopy": {"pct": terrain_pct, "area_km2": terrain_area_km2, "pixels": terrain_pixels},
-                "Built-up / Structural Assets": {"pct": builtup_pct, "area_km2": builtup_area_km2, "pixels": urban_pixels}
+                "Vegetation / Forest": {"pct": veg_pct, "area_km2": None, "pixels": veg_pixels},
+                "Agricultural Land": {"pct": agri_pct, "area_km2": None, "pixels": agri_pixels},
+                "Water-like": {"pct": water_pct, "area_km2": None, "pixels": water_pixels},
+                "Urban / Built-up-like": {"pct": builtup_pct, "area_km2": None, "pixels": builtup_pixels},
+                "Barren / Mixed Terrain": {"pct": other_pct, "area_km2": None, "pixels": other_pixels}
             }
         }
         
@@ -206,17 +196,17 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
         water_mask = (b > r + 20) & (b > g) & (b > 50)
         water_pixels = int(np.sum(water_mask))
         water_pct = round((water_pixels / total_pixels) * 100, 2)
-        water_area_km2 = round((water_pct / 100) * total_area_km2, 3)
+        water_area_km2 = None
         
         veg_mask = (g > r + 15) & (g > b) & (g > 65)
         veg_pixels = int(np.sum(veg_mask))
         veg_pct = round((veg_pixels / total_pixels) * 100, 2)
-        veg_area_km2 = round((veg_pct / 100) * total_area_km2, 3)
+        veg_area_km2 = None
         
         agri_mask = (r > 100) & (g > 130) & (b < 115) & (~veg_mask)
         agri_pixels = int(np.sum(agri_mask))
         agri_pct = round((agri_pixels / total_pixels) * 100, 2)
-        agri_area_km2 = round((agri_pct / 100) * total_area_km2, 3)
+        agri_area_km2 = None
         
         diff = np.abs(r - g) + np.abs(g - b)
         urban_mask = (diff < 25) & (gray > 100) & (gray < 220) & (~water_mask)
@@ -224,10 +214,10 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
         builtup_mask = (urban_mask | roof_mask) & (~veg_mask) & (~water_mask)
         builtup_pixels = int(np.sum(builtup_mask))
         builtup_pct = round((builtup_pixels / total_pixels) * 100, 2)
-        builtup_area_km2 = round((builtup_pct / 100) * total_area_km2, 3)
+        builtup_area_km2 = None
         
         other_pct = max(0.0, round(100.0 - (water_pct + veg_pct + agri_pct + builtup_pct), 2))
-        other_area_km2 = round((other_pct / 100) * total_area_km2, 3)
+        other_area_km2 = None
         other_pixels = int(total_pixels - (water_pixels + veg_pixels + agri_pixels + builtup_pixels))
         
         breakdown = {
@@ -241,32 +231,32 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
         
         if "water" in q_lower or "river" in q_lower or "lake" in q_lower:
             answer = (
-                f"Surface water bodies cover **{water_pct}%** ({water_area_km2} km²) of the scene.\n\n"
-                f"**Optical Spectral Basis:** Detected via strong blue-band reflectance and shortwave infrared absorption (NDWI > 0.20).\n\n"
-                f"**Resolution Basis:** Sentinel-2 Level-2A nominal Ground Sampling Distance (GSD = 10.0 m/pixel, 26.214 km² total coverage)."
+                f"Water-like pixels account for **{water_pct}% of the scene**.\n\n"
+                f"**RGB heuristic basis:** The prototype uses blue-channel dominance on the uploaded RGB image. "
+                f"This is not NDWI and does not imply a multispectral Sentinel-2 product."
             )
         elif "urban" in q_lower or "building" in q_lower or "settlement" in q_lower:
             answer = (
-                f"Built-up settlements and infrastructure account for **{builtup_pct}%** ({builtup_area_km2} km²) of the scene.\n\n"
-                f"**Spectral Basis:** Characteristic high albedo and low vegetation indices (NDVI < 0.15, NDBI > 0.10).\n\n"
-                f"**Resolution Basis:** Calculated using nominal 10.0m GSD (512×512 px = 26.214 km²)."
+                f"Built-up-like pixels account for **{builtup_pct}% of the scene**.\n\n"
+                f"**RGB heuristic basis:** brightness plus low channel separation / warm-roof patterns are used. "
+                f"This is not NDBI and no physical area is claimed."
             )
         elif "forest" in q_lower or "vegetation" in q_lower or "tree" in q_lower:
             answer = (
-                f"Vegetation canopy and agricultural parcels cover **{veg_pct + agri_pct:.2f}%** ({round(veg_area_km2 + agri_area_km2, 3)} km²) of the terrain.\n\n"
-                f"**Spectral Basis:** High chlorophyll absorption in red (Band 4) and strong near-infrared plateau reflectance (mean NDVI ≈ 0.68).\n\n"
-                f"**Resolution Basis:** Sentinel-2 MSI 10.0m GSD (26.214 km² total coverage)."
+                f"Green/vegetation-like pixels account for **{veg_pct + agri_pct:.2f}% of the scene**.\n\n"
+                f"**RGB heuristic basis:** green-channel dominance is used as a visual proxy. "
+                f"No NIR band is present in this upload, so NDVI is not computed."
             )
         else:
             answer = (
-                f"The scene is predominantly **{dominant_class[0]}** ({dominant_class[1]}% area / {veg_area_km2 if 'Vegetation' in dominant_class[0] else water_area_km2} km²).\n\n"
-                f"**Multispectral Land-Cover Breakdown:**\n"
-                f"- Dense Vegetation / Forest: **{veg_pct}%** ({veg_area_km2} km²)\n"
-                f"- Agricultural Parcels: **{agri_pct}%** ({agri_area_km2} km²)\n"
-                f"- Water Bodies: **{water_pct}%** ({water_area_km2} km²)\n"
-                f"- Built-up Infrastructure: **{builtup_pct}%** ({builtup_area_km2} km²)\n"
-                f"- Barren / Mixed Soil: **{other_pct}%** ({other_area_km2} km²)\n\n"
-                f"**Resolution Basis:** Sentinel-2 MSI 10.0m nominal GSD (26.214 km² total extent)."
+                f"The scene is predominantly **{dominant_class[0]}** (**{dominant_class[1]}% of scene pixels**).\n\n"
+                f"**RGB land-cover heuristic breakdown:**\n"
+                f"- Green/vegetation-like: **{veg_pct}%**\n"
+                f"- Agriculture-like: **{agri_pct}%**\n"
+                f"- Water-like: **{water_pct}%**\n"
+                f"- Built-up-like: **{builtup_pct}%**\n"
+                f"- Other/bare/mixed: **{other_pct}%**\n\n"
+                f"These are pixel percentages only; physical area requires trusted GSD/CRS metadata."
             )
             
         # Create full classified color overlay for canvas toggling
