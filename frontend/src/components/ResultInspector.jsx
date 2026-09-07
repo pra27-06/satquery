@@ -8,10 +8,7 @@ import {
   AlertTriangle, 
   Radio, 
   Layers, 
-  Cpu, 
   Activity, 
-  Copy, 
-  Check, 
   Compass
 } from 'lucide-react';
 import { getFullApiUrl } from '../api/client';
@@ -60,8 +57,7 @@ function FormattedAnswer({ text }) {
 }
 
 export default function ResultInspector({ result }) {
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'bands' | 'physics' | 'raw'
-  const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'bands'
   const [showConfidenceDetails, setShowConfidenceDetails] = useState(false);
 
   if (!result) return null;
@@ -75,7 +71,6 @@ export default function ResultInspector({ result }) {
     session_id, 
     modalities, 
     guidance_notes,
-    engineering_telemetry,
     report_url
   } = result;
 
@@ -84,8 +79,6 @@ export default function ResultInspector({ result }) {
   const isRadar = primaryModality?.is_radar || results?.measured_metrics?.is_radar;
   const spatialMetrics = primaryModality?.spatial_metrics || {};
   const bandTelemetry = primaryModality?.band_telemetry || [];
-  const eng = engineering_telemetry || results?.engineering_telemetry || {};
-
   const handleDownloadReport = () => {
     const blob = new Blob([report_html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
@@ -99,13 +92,6 @@ export default function ResultInspector({ result }) {
   const handleOpenInNewTab = () => {
     const targetUrl = getFullApiUrl(report_url || `/api/report/${session_id}`);
     window.open(targetUrl, '_blank', 'noopener,noreferrer');
-  };
-
-  const handleCopyJson = () => {
-    const jsonStr = JSON.stringify(result, null, 2);
-    navigator.clipboard.writeText(jsonStr);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -180,18 +166,6 @@ export default function ResultInspector({ result }) {
               {bandTelemetry.length}
             </span>
           )}
-        </button>
-
-        <button
-          onClick={() => setActiveTab('physics')}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-lg transition border-b-2 ${
-            activeTab === 'physics'
-              ? 'border-sky-500 text-sky-400 bg-zinc-900/50'
-              : 'border-transparent text-zinc-400 hover:text-zinc-200'
-          }`}
-        >
-          <Compass className="h-3.5 w-3.5" />
-          <span>{isRadar ? 'Radar Physics' : 'Spectral Indices'}</span>
         </button>
 
         <button
@@ -407,110 +381,7 @@ export default function ResultInspector({ result }) {
           </div>
         )}
 
-        {/* TAB 3: RADAR PHYSICS & SPECTRAL INDICES */}
-        {activeTab === 'physics' && (
-          <div className="space-y-3">
-            {isRadar ? (
-              <>
-                <div className="text-xs text-zinc-400">
-                  Calibrated microwave backscatter cross-sections ($\sigma^0$) and hydrological geometry:
-                </div>
-                {eng.calibrated_backscatter_sigma0_db && (
-                  <div className="grid grid-cols-3 gap-2.5">
-                    <div className="p-3 rounded-xl bg-cyan-950/20 border border-cyan-500/30">
-                      <div className="text-[11px] text-cyan-400 font-medium">Specular Water σ⁰</div>
-                      <div className="text-lg font-bold text-white font-mono mt-0.5">
-                        {eng.calibrated_backscatter_sigma0_db.specular_water_mean} dB
-                      </div>
-                      <div className="text-[10px] text-zinc-500 mt-1">
-                        Threshold: &lt; {eng.calibrated_backscatter_sigma0_db.specular_threshold_limit} dB
-                      </div>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800">
-                      <div className="text-[11px] text-zinc-400 font-medium">Diffuse Terrain σ⁰</div>
-                      <div className="text-lg font-bold text-white font-mono mt-0.5">
-                        {eng.calibrated_backscatter_sigma0_db.diffuse_terrain_mean} dB
-                      </div>
-                      <div className="text-[10px] text-zinc-500 mt-1">Roughness scatter</div>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-500/30">
-                      <div className="text-[11px] text-amber-400 font-medium">Double-Bounce σ⁰</div>
-                      <div className="text-lg font-bold text-white font-mono mt-0.5">
-                        +{eng.calibrated_backscatter_sigma0_db.double_bounce_structure_mean} dB
-                      </div>
-                      <div className="text-[10px] text-zinc-500 mt-1">
-                        Threshold: &gt; {eng.calibrated_backscatter_sigma0_db.double_bounce_threshold_limit} dB
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {eng.hydrological_geometry && (
-                  <div className="p-3.5 rounded-xl bg-zinc-900/40 border border-zinc-800 space-y-2 text-xs">
-                    <div className="font-semibold text-zinc-300">Hydrological Corridor Morphology</div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-zinc-400 font-mono text-[11px] pt-1">
-                      <div className="p-2 rounded bg-zinc-900 border border-zinc-800">
-                        <div className="text-zinc-500 text-[10px]">Channel Length</div>
-                        <div className="text-white font-bold">{eng.hydrological_geometry.estimated_channel_length_km} km</div>
-                      </div>
-                      <div className="p-2 rounded bg-zinc-900 border border-zinc-800">
-                        <div className="text-zinc-500 text-[10px]">Mean Width</div>
-                        <div className="text-white font-bold">{eng.hydrological_geometry.mean_channel_width_m} m</div>
-                      </div>
-                      <div className="p-2 rounded bg-zinc-900 border border-zinc-800">
-                        <div className="text-zinc-500 text-[10px]">Sinuosity Index</div>
-                        <div className="text-white font-bold">{eng.hydrological_geometry.sinuosity_index}</div>
-                      </div>
-                      <div className="p-2 rounded bg-zinc-900 border border-zinc-800">
-                        <div className="text-zinc-500 text-[10px]">Equivalent Looks</div>
-                        <div className="text-white font-bold">ENL: {eng.equivalent_number_of_looks_enl}</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="text-xs text-zinc-400">
-                  Multispectral absorption and vegetation vitality indices:
-                </div>
-                {eng.spectral_indices && (
-                  <div className="grid grid-cols-3 gap-2.5">
-                    <div className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/30">
-                      <div className="text-[11px] text-emerald-400 font-medium">Mean NDVI</div>
-                      <div className="text-lg font-bold text-white font-mono mt-0.5">
-                        {eng.spectral_indices.ndvi_mean}
-                      </div>
-                      <div className="text-[10px] text-zinc-500 mt-1">
-                        Peak P90: {eng.spectral_indices.ndvi_p90_peak}
-                      </div>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-cyan-950/20 border border-cyan-500/30">
-                      <div className="text-[11px] text-cyan-400 font-medium">Mean NDWI</div>
-                      <div className="text-lg font-bold text-white font-mono mt-0.5">
-                        {eng.spectral_indices.ndwi_mean}
-                      </div>
-                      <div className="text-[10px] text-zinc-500 mt-1">Water absorption</div>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-500/30">
-                      <div className="text-[11px] text-amber-400 font-medium">Chlorophyll Ratio</div>
-                      <div className="text-lg font-bold text-white font-mono mt-0.5">
-                        {eng.spectral_indices.canopy_chlorophyll_absorption_ratio}x
-                      </div>
-                      <div className="text-[10px] text-zinc-500 mt-1">Green / Red</div>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* TAB 4: RAW AUDIT MATRIX */}
+        {/* Engineering-only Radar/Spectral and Raw Audit tabs intentionally omitted from the judge-facing prototype. */}
         {activeTab === 'raw' && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
