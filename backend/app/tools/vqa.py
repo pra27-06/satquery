@@ -106,34 +106,6 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
             "suggested_next_step": "Upload optical companion for Cross-Modal Fusion"
         }
         
-        # Deep SAR engineering telemetry is intentionally omitted from the judge-facing prototype.
-        engineering_telemetry = {} # legacy compatibility only
-        engineering_telemetry = {
-            "sensor_type": "Active Microwave Synthetic Aperture Radar (SAR)",
-            "frequency_band": "C-band (5.405 GHz, λ ≈ 5.6 cm)",
-            "polarization": "Single Co-polarized (VV Amplitude)",
-            "equivalent_number_of_looks_enl": enl,
-            "speckle_coefficient_cv": round(std_intensity / (mean_intensity + 1e-5), 3),
-            "calibrated_backscatter_sigma0_db": {
-                "specular_water_mean": -21.4,
-                "specular_threshold_limit": -18.0,
-                "diffuse_terrain_mean": -11.8,
-                "double_bounce_structure_mean": 2.6,
-                "double_bounce_threshold_limit": -6.0
-            },
-            "hydrological_geometry": {
-                "water_surface_area_km2": water_area_km2,
-                "water_surface_hectares": round(water_area_km2 * 100, 1),
-                "estimated_channel_length_km": round(float(w * 0.010 * 1.25), 2),
-                "mean_channel_width_m": round(float((water_pixels / h) * 10.0), 1),
-                "sinuosity_index": 1.34
-            },
-            "class_area_metrics": {
-                "Water Body / River Network": {"pct": water_pct, "area_km2": water_area_km2, "pixels": water_pixels},
-                "Rough Terrain & Canopy": {"pct": terrain_pct, "area_km2": terrain_area_km2, "pixels": terrain_pixels},
-                "Built-up / Structural Assets": {"pct": builtup_pct, "area_km2": builtup_area_km2, "pixels": urban_pixels}
-            }
-        }
         
     else:
         # =========================================================================
@@ -192,11 +164,6 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
                     "total_area_km2": total_area_km2,
                     "is_radar": False,
                     "mean_luminance": round(float(np.mean(gray)), 1)
-                },
-                "engineering_telemetry": {
-                    "atmospheric_condition": f"Cumulus cloud cover obscuring {cloud_pct}% of ground footprint",
-                    "solar_attenuation": ">90% optical attenuation in visible spectrum",
-                    "surface_visibility": "Severely compromised (Refusal threshold triggered)"
                 },
                 "raw_image_url": raw_image_url,
                 "overlay_url": array_to_base64_png(overlay)
