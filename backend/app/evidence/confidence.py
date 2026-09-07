@@ -2,8 +2,7 @@
 confidence.py
 -------------
 Auditable multi-factor confidence scoring engine.
-Evaluates the mathematical agreement between physical spectral indices, 
-spatial coherence, Otsu separability, and sensor modality coverage.
+Evaluates spatial coherence, Otsu separability, and sensor modality coverage.
 """
 
 from typing import Dict, Any
@@ -37,7 +36,7 @@ def compute_confidence(
                     "weight": "-45%",
                     "value": "75.4% pixel saturation in optical bands",
                     "positive": False,
-                    "scientific_rationale": "High atmospheric reflectance saturates RGB sensors, preventing NDVI/NDWI ground surface separation."
+                    "scientific_rationale": "High atmospheric reflectance saturates the visible channels, preventing reliable ground-feature separation."
                 },
                 {
                     "factor": "Absence of Penetrating Radar Companion",
@@ -118,11 +117,11 @@ def compute_confidence(
         base_score += 0.02
     elif task == "SINGLE_VQA":
         factors.append({
-            "factor": "Spectral Index Consensus (NDVI / NDWI / Radar Backscatter)",
+            "factor": "Image Feature Consensus",
             "weight": "+2.0%",
-            "value": "Bimodal Consensus Score = 0.95",
+            "value": "Deterministic visual feature agreement",
             "positive": True,
-            "scientific_rationale": "Multi-band physical index thresholds converge on identical class partition."
+            "scientific_rationale": "Independent deterministic image features support the selected land-cover interpretation."
         })
         base_score += 0.02
         
@@ -132,7 +131,7 @@ def compute_confidence(
         "confidence_score": final_score,
         "confidence_percentage": f"{final_score * 100:.1f}%",
         "rating": "HIGH CONFIDENCE" if final_score >= 0.90 else "MODERATE CONFIDENCE",
-        "calculation_basis": "Empirical heuristic agreement metric measuring mathematical convergence between spectral index variance and morphological spatial contiguity.",
+        "calculation_basis": "Empirical heuristic agreement metric measuring deterministic image separability and spatial contiguity."
         "mathematical_formula": "Confidence = w_base + w_otsu(η) + w_spatial(Q) + w_sensor(Modality)",
         "audit_metrics": {
             "otsu_separability_index": 0.94,
