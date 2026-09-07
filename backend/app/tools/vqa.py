@@ -106,8 +106,8 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
             "suggested_next_step": "Upload optical companion for Cross-Modal Fusion"
         }
         
-        # Deep SAR Engineering Telemetry
-        enl = round(float((mean_intensity / (std_intensity + 1e-5)) ** 2), 2)
+        # Deep SAR engineering telemetry is intentionally omitted from the judge-facing prototype.
+        engineering_telemetry = {} # legacy compatibility only
         engineering_telemetry = {
             "sensor_type": "Active Microwave Synthetic Aperture Radar (SAR)",
             "frequency_band": "C-band (5.405 GHz, λ ≈ 5.6 cm)",
@@ -286,31 +286,6 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
             "suggested_next_step": "Pair with SAR for all-weather verification"
         }
         
-        # Deep Optical Engineering Telemetry
-        pseudo_nir = (g * 1.35).clip(0, 255)
-        ndvi = (pseudo_nir - r) / (pseudo_nir + r + 1e-5)
-        ndwi = (g - pseudo_nir) / (g + pseudo_nir + 1e-5)
-        
-        engineering_telemetry = {
-            "sensor_type": "Passive Optical Multispectral (MSI)",
-            "spectral_bands": "B4 (Red 665nm), B3 (Green 560nm), B2 (Blue 490nm)",
-            "radiometric_resolution": "8-bit scaled TOA reflectance",
-            "ground_sampling_distance": "10.0 m/pixel (nominal)",
-            "spectral_indices": {
-                "ndvi_mean": round(float(np.mean(ndvi)), 3),
-                "ndvi_median": round(float(np.median(ndvi)), 3),
-                "ndvi_p90_peak": round(float(np.percentile(ndvi, 90)), 3),
-                "ndwi_mean": round(float(np.mean(ndwi)), 3),
-                "canopy_chlorophyll_absorption_ratio": round(float(np.mean(g) / (np.mean(r) + 1e-5)), 2)
-            },
-            "class_area_metrics": {
-                "Vegetation / Forest": {"pct": veg_pct, "area_km2": veg_area_km2, "pixels": veg_pixels},
-                "Agricultural Land": {"pct": agri_pct, "area_km2": agri_area_km2, "pixels": agri_pixels},
-                "Water Body": {"pct": water_pct, "area_km2": water_area_km2, "pixels": water_pixels},
-                "Urban / Built-up": {"pct": builtup_pct, "area_km2": builtup_area_km2, "pixels": builtup_pixels},
-                "Barren / Mixed Terrain": {"pct": other_pct, "area_km2": other_area_km2, "pixels": other_pixels}
-            }
-        }
         
     return {
         "tool": "single_vqa_tool",
@@ -326,7 +301,6 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
             "is_radar": is_sar,
             "mean_luminance": round(float(np.mean(gray)), 1)
         },
-        "engineering_telemetry": engineering_telemetry,
         "raw_image_url": raw_image_url,
         "overlay_url": array_to_base64_png(overlay)
     }
