@@ -139,12 +139,12 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
             # TRIGGER REFUSAL: Cannot Confirm Case
             answer = (
                 f"**CANNOT CONFIRM: Insufficient Evidence Due to Atmospheric Cloud Obscuration.**\n\n"
-                f"**Physical Diagnosis:** The optical sensor exhibits **{cloud_pct}% atmospheric cloud saturation** "
-                f"(visible channels saturated DN > 225), completely attenuating solar VNIR radiation from reaching the ground.\n\n"
-                f"**Scientific Limitation:** Optical algorithms (NDVI for vegetation, NDWI for water) require surface reflectance. "
-                f"Under dense cloud condensation, passive optical classification yields uncalibrated or misleading results.\n\n"
-                f"**Recommended Cross-Sensor Action:** Ingest an active **Synthetic Aperture Radar (SAR / Sentinel-1 C-band)** companion raster. "
-                f"Microwave radar pulses (λ ≈ 5.6 cm) penetrate cloud particles and precipitation without attenuation, allowing the true surface water and built-up geometry to be mapped with >95% confidence."
+                f"**Image diagnosis:** **{cloud_pct}%** of the uploaded RGB pixels are very bright and cloud-like "
+                f"(R, G and B > 225). This is a lightweight cloud-obscuration heuristic, not a trained cloud model.\n\n"
+                f"**Scientific limitation:** Dense clouds can hide the ground in optical imagery, so the prototype refuses to make a ground-feature claim from the obscured pixels. "
+                f"No NDVI/NDWI is computed from this RGB-only upload.\n\n"
+                f"**Recommended cross-sensor action:** Add a SAR companion image if available. "
+                f"A verified SAR source can provide complementary information because microwave sensing is less affected by cloud cover."
             )
             
             overlay = img.copy()
@@ -152,11 +152,11 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
             overlay[cloud_mask] = (0.3 * overlay[cloud_mask] + 0.7 * np.array([240, 70, 70])).astype(np.uint8)
             
             guidance = {
-                "detected_sensor": "Optical Multispectral (Severe Cloud Obscuration)",
+                "detected_sensor": "RGB-like optical raster with severe cloud-like obstruction",
                 "sensor_advantages": "None in overcast regions (attenuated by clouds).",
                 "missing_modality_alert": (
-                    f"🚨 Severe Cloud Cover Obscuration ({cloud_pct}%): Optical ground sensing is blocked. "
-                    f"Ingest a Sentinel-1 C-band SAR radar raster to penetrate cloud cover and map ground features."
+                    f"🚨 Severe cloud-like obstruction ({cloud_pct}%): ground interpretation is unreliable in the obscured pixels. "
+                    f"Add a SAR companion image for complementary evidence."
                 ),
                 "suggested_next_step": "Upload Sentinel-1 SAR companion raster"
             }
