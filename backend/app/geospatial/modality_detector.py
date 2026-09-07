@@ -86,10 +86,10 @@ def detect_modality(img: np.ndarray) -> Dict[str, Any]:
     is_single_band_or_gray = (c == 1) or (channel_diff < 1.5)
     
     # Spatial Metrics (Sentinel constellation standard: 10m GSD)
-    gsd_meters = 10.0
-    pixel_area_m2 = gsd_meters * gsd_meters
-    total_area_km2 = round((total_pixels * pixel_area_m2) / 1_000_000, 3)
-    total_hectares = round(total_area_km2 * 100, 1)
+    gsd_meters = None
+    pixel_area_m2 = None
+    total_area_km2 = None
+    total_hectares = None
 
     # Radar Physics Feature Extraction
     water_mask = (gray < 42)
@@ -106,11 +106,11 @@ def detect_modality(img: np.ndarray) -> Dict[str, Any]:
 
     if is_single_band_or_gray:
         modality = "SAR_RADAR"
-        sensor_family = "Synthetic Aperture Radar (SAR / Sentinel-1 C-Band)"
+        sensor_family = "Single-band / grayscale raster (sensor not verified)"
         sensor_derivation = (
             f"Derived via Radiometric Distribution: Single-channel amplitude distribution "
             f"(mean: {np.mean(gray):.1f}, std: {np.std(gray):.1f}, speckle index: {speckle_index:.2f}) "
-            f"matching European Space Agency Sentinel-1 C-band Level-1 GRD characteristics."
+            f"This pixel statistic alone is not sufficient to identify Sentinel-1 or calibrated SAR data."
         )
         is_radar = True
         
@@ -146,11 +146,11 @@ def detect_modality(img: np.ndarray) -> Dict[str, Any]:
         ]
     else:
         modality = "OPTICAL_RGB"
-        sensor_family = "Optical Multispectral (Sentinel-2 MSI / Landsat 8-9)"
+        sensor_family = "RGB-like optical image (sensor not verified)"
         sensor_derivation = (
             f"Derived via Multispectral Ratio: 3-channel visible spectrum "
             f"(inter-channel variance: {channel_diff:.1f}) "
-            f"matching European Space Agency Sentinel-2 MSI Level-2A BOA reflectance characteristics."
+            f"This pixel statistic alone is not sufficient to identify Sentinel-2/Landsat or multispectral bands."
         )
         is_radar = False
         
@@ -179,23 +179,22 @@ def detect_modality(img: np.ndarray) -> Dict[str, Any]:
             "total_pixels": total_pixels,
             "total_area_km2": total_area_km2,
             "total_hectares": total_hectares,
-            "spatial_crs": "WGS 84 / UTM Zone 43N (EPSG:32643)",
-            "nominal_center": "19.0760° N, 72.8777° E"
+            "spatial_crs": None,
+            "nominal_center": None,
+            "metadata_status": "NOT_AVAILABLE_FROM_IMAGE_PIXELS"
         },
         "band_telemetry": bands,
         "radar_stats": {
             "specular_water_pct": water_pct,
-            "specular_water_area_km2": water_area_km2,
+            "specular_water_area_km2": None,
             "diffuse_terrain_pct": terrain_pct,
-            "diffuse_terrain_area_km2": terrain_area_km2,
+            "diffuse_terrain_area_km2": None,
             "double_bounce_structure_pct": structure_pct,
-            "double_bounce_structure_area_km2": structure_area_km2,
+            "double_bounce_structure_area_km2": None,
             "mean_backscatter_intensity": round(mean_val, 1),
-            "estimated_sigma0_db": {
-                "specular_mean_db": round(float(-24.0 + (water_pct * 0.05)), 1),
-                "diffuse_mean_db": round(float(-12.5 + (terrain_pct * 0.02)), 1),
-                "double_bounce_mean_db": round(float(-4.0 + (structure_pct * 0.05)), 1)
-            }
+            "estimated_sigma0_db": None,
+            "calibrated_backscatter_available": False,
+            "analysis_note": "Intensity thresholds are prototype heuristics, not calibrated sigma0."
         },
         "recommendations": recommendations,
         "missing_modalities": missing_modalities
