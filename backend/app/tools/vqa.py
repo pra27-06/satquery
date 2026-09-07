@@ -106,7 +106,7 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
         
         # Deep SAR Engineering Telemetry
         enl = round(float((mean_intensity / (std_intensity + 1e-5)) ** 2), 2)
-                engineering_telemetry = {
+        engineering_telemetry = {
             "sensor_type": "SAR-like grayscale image (sensor not verified)",
             "frequency_band": None,
             "polarization": None,
