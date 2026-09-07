@@ -215,7 +215,7 @@ export default function ResultInspector({ result }) {
             {/* Neuro-Symbolic Agent & Engine Role Demarcation */}
             <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800 text-[11px]">
               <div className="flex items-center gap-1.5 text-sky-400">
-                <span className="font-semibold text-zinc-300">LLM Semantic Intent:</span>
+                <span className="font-semibold text-zinc-300">Query Router:</span>
                 <span className="font-mono text-sky-300">{result.task_description || result.task}</span>
               </div>
               <div className="flex items-center gap-1.5 text-emerald-400">
@@ -259,13 +259,13 @@ export default function ResultInspector({ result }) {
                   <div>
                     <div className="text-xs text-zinc-400">Dual-Estimate Confidence</div>
                     <div className="text-lg font-bold text-white flex items-baseline gap-2">
-                      {confidence?.confidence_percentage || '96.0%'}
+                      {confidence?.confidence_percentage || '—'}
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                         confidence?.rating?.includes('LOW') 
                           ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' 
                           : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                       }`}>
-                        {confidence?.rating || 'HIGH CONFIDENCE'}
+                        {confidence?.rating || 'Evidence status unavailable'}
                       </span>
                     </div>
                   </div>
@@ -314,10 +314,10 @@ export default function ResultInspector({ result }) {
             <div className="p-3 rounded-xl bg-zinc-900/40 border border-zinc-800 flex items-center justify-between text-xs text-zinc-400">
               <div className="flex items-center gap-2">
                 <Compass className="h-4 w-4 text-purple-400" />
-                <span>Resolution Basis: <strong className="text-zinc-200">10.0m Nominal GSD</strong></span>
+                <span>Resolution Basis: <strong className="text-zinc-200">Pixel grid only (GSD unknown)</strong></span>
               </div>
               <div className="font-mono text-zinc-300">
-                512×512 px = <strong className="text-white">{spatialMetrics.total_area_km2 || results?.measured_metrics?.total_area_km2 || '26.214'} km²</strong>
+                {spatialMetrics.total_pixels || results?.measured_metrics?.total_pixels || 'Input'} pixels — physical area unavailable
               </div>
             </div>
 
@@ -398,10 +398,10 @@ export default function ResultInspector({ result }) {
             <div className="p-3.5 rounded-xl bg-zinc-900/40 border border-zinc-800 space-y-1.5 text-xs">
               <div className="font-semibold text-zinc-300">Spatial & Geodetic Metadata</div>
               <div className="grid grid-cols-2 gap-2 text-zinc-400 font-mono text-[11px] pt-1">
-                <div>CRS: <span className="text-zinc-200">{spatialMetrics.spatial_crs || 'EPSG:32643'}</span></div>
-                <div>GSD: <span className="text-zinc-200">{spatialMetrics.ground_sampling_distance_m || 10.0} m/px</span></div>
+                <div>CRS: <span className="text-zinc-200">{spatialMetrics.spatial_crs || 'Not provided'}</span></div>
+                <div>GSD: <span className="text-zinc-200">{spatialMetrics.ground_sampling_distance_m || 'Unknown'}</span></div>
                 <div>Total Pixels: <span className="text-zinc-200">{results?.measured_metrics?.total_pixels?.toLocaleString() || '262,144'}</span></div>
-                <div>Area: <span className="text-zinc-200">{spatialMetrics.total_area_km2 || '26.21'} km² ({spatialMetrics.total_hectares || '2621'} ha)</span></div>
+                <div>Area: <span className="text-zinc-200">Not calculated from image pixels</span></div>
               </div>
             </div>
           </div>
@@ -413,7 +413,7 @@ export default function ResultInspector({ result }) {
             {isRadar ? (
               <>
                 <div className="text-xs text-zinc-400">
-                  Calibrated microwave backscatter cross-sections ($\sigma^0$) and hydrological geometry:
+                  Prototype SAR intensity heuristics (not calibrated backscatter):
                 </div>
                 {eng.calibrated_backscatter_sigma0_db && (
                   <div className="grid grid-cols-3 gap-2.5">
@@ -474,12 +474,12 @@ export default function ResultInspector({ result }) {
             ) : (
               <>
                 <div className="text-xs text-zinc-400">
-                  Multispectral absorption and vegetation vitality indices:
+                  RGB-based prototype heuristics (not multispectral indices):
                 </div>
                 {eng.spectral_indices && (
                   <div className="grid grid-cols-3 gap-2.5">
                     <div className="p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/30">
-                      <div className="text-[11px] text-emerald-400 font-medium">Mean NDVI</div>
+                      <div className="text-[11px] text-emerald-400 font-medium">Pseudo-NDVI (remove for SIH demo)</div>
                       <div className="text-lg font-bold text-white font-mono mt-0.5">
                         {eng.spectral_indices.ndvi_mean}
                       </div>
@@ -489,7 +489,7 @@ export default function ResultInspector({ result }) {
                     </div>
 
                     <div className="p-3 rounded-xl bg-cyan-950/20 border border-cyan-500/30">
-                      <div className="text-[11px] text-cyan-400 font-medium">Mean NDWI</div>
+                      <div className="text-[11px] text-cyan-400 font-medium">Pseudo-NDWI (remove for SIH demo)</div>
                       <div className="text-lg font-bold text-white font-mono mt-0.5">
                         {eng.spectral_indices.ndwi_mean}
                       </div>
@@ -497,7 +497,7 @@ export default function ResultInspector({ result }) {
                     </div>
 
                     <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-500/30">
-                      <div className="text-[11px] text-amber-400 font-medium">Chlorophyll Ratio</div>
+                      <div className="text-[11px] text-amber-400 font-medium">RGB Green/Red ratio (heuristic)</div>
                       <div className="text-lg font-bold text-white font-mono mt-0.5">
                         {eng.spectral_indices.canopy_chlorophyll_absorption_ratio}x
                       </div>
