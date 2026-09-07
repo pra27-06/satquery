@@ -381,24 +381,6 @@ export default function ResultInspector({ result }) {
           </div>
         )}
 
-        {/* Engineering-only Radar/Spectral and Raw Audit tabs intentionally omitted from the judge-facing prototype. */}
-        {activeTab === 'raw' && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-zinc-400">Structured JSON provenance payload:</span>
-              <button
-                onClick={handleCopyJson}
-                className="flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-[11px] text-zinc-300 transition"
-              >
-                {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
-                <span>{copied ? 'Copied!' : 'Copy JSON'}</span>
-              </button>
-            </div>
-            <pre className="p-3.5 rounded-xl bg-black/80 border border-zinc-800 text-[11px] font-mono text-zinc-300 max-h-80 overflow-y-auto leading-relaxed">
-              {JSON.stringify(result, null, 2)}
-            </pre>
-          </div>
-        )}
       </div>
     </div>
   );
