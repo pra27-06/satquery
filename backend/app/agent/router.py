@@ -149,7 +149,6 @@ def execute_agent_pipeline(
         "answer": tool_res.get("answer"),
         "confidence": confidence,
         "results": tool_res,
-        "engineering_telemetry": tool_res.get("engineering_telemetry", {}),
         "trace": trace.get_trace_log(),
         "report_id": report["data"]["report_id"],
         "report_html": report["html"],
