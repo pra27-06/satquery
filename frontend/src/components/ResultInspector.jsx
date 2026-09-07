@@ -283,10 +283,10 @@ export default function ResultInspector({ result }) {
               {showConfidenceDetails && (
                 <div className="pt-3 border-t border-zinc-800 space-y-2.5 text-xs text-zinc-300">
                   <div className="p-2.5 rounded-lg bg-black/40 border border-zinc-800/80 font-mono text-[11px] text-zinc-400">
-                    <span className="text-zinc-200 font-semibold">Mathematical Basis:</span> {confidence?.mathematical_formula || 'Confidence = w_base + w_otsu(η) + w_spatial(Q)'}
+                    <span className="text-zinc-200 font-semibold">Mathematical Basis:</span> {confidence?.mathematical_formula || 'No calibrated confidence formula is claimed in the MVP.'}
                   </div>
                   <p className="text-[11px] text-zinc-400 leading-relaxed italic">
-                    {confidence?.calculation_basis || 'Calculated via weighted heuristic consensus over spatial contiguity, histogram separability index, and radiometric signal-to-noise ratio.'}
+                    {confidence?.calculation_basis || 'Confidence is intentionally not presented as a calibrated probability; inspect the deterministic evidence and stated input limitations instead.'}
                   </p>
 
                   {/* Factor Breakdown */}
