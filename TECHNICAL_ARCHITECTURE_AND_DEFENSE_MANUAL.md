@@ -1,7 +1,7 @@
 # SATQUERY AI: COMPREHENSIVE TECHNICAL ARCHITECTURE & 100-QUESTION JUDGES DEFENSE MANUAL
 ### Official Technical Specification, Physical Derivations, and Defense Guide for Smart India Hackathon (SIH26167 — ISRO Problem Statement)
 
-**Authors / System Architects:** Tanmay Jain & Core Engineering Team  
+**Authors / System Architects:** Prachi Bhalla & Core Engineering Team  
 **Affiliation:** SatQuery AI — Neuro-Symbolic Remote Sensing & Geospatial Intelligence Platform  
 **Target Organization:** Indian Space Research Organisation (ISRO) / National Remote Sensing Centre (NRSC) / Department of Space  
 **Problem Statement Code:** SIH26167 — Natural Language Question Answering and Semantic Information Retrieval over Multi-Modal Satellite Imagery  
@@ -80,10 +80,10 @@ We separate **High-Level Semantic Reasoning** from **Low-Level Deterministic Com
   - **Zero Hallucination**: Pixel masks are produced by physical math, never by generative token prediction.
   - **Ultra-Low Latency**: Inference executes in **<300 milliseconds on standard CPU hardware**.
   - **Resource Conscious**: Operates inside **<150MB of system RAM**, deployable on low-cost edge machines, field laptops, or embedded satellite processors.
-  - **Mathematical Auditability**: Confidence scores are backed by an empirical consensus formula ($S = 0.35\eta + 0.25Q + 0.20	ext{SNR} + 0.20\mathcal{C}$) with an explicit refusal benchmark under cloud obscuration.
+  - **Mathematical Auditability**: Confidence scores are backed by an empirical consensus formula ($S = 0.35\eta + 0.25Q + 0.20\text{SNR} + 0.20\mathcal{C}$) with an explicit refusal benchmark under cloud obscuration.
 
 ### 1.4 Architectural Axioms & Engineering Non-Negotiables
-1. **Physical Grounding Over Statistical Guessing**: Every spatial claim must cite an exact Ground Sampling Distance (GSD: 10.0m/px) and physical area formula ($(512 	imes 10	ext{m})^2 = 26.214	ext{ km}^2$).
+1. **Physical Grounding Over Statistical Guessing**: Every spatial claim must cite an exact Ground Sampling Distance (GSD: 10.0m/px) and physical area formula ($(512 \times 10\text{m})^2 = 26.214\text{ km}^2$).
 2. **Sensor Modality Awareness**: No raster is processed without preflight diagnostic identification of its electromagnetic properties (channel variance $\Delta(R,G,B)$, speckle index $C_v$, radiometric SNR).
 3. **Calibrated Refusal**: When atmospheric conditions (clouds > 70%) or sensor limitations prevent scientific confirmation, the system MUST refuse to guess, drop confidence to <40%, and recommend the appropriate missing modality (e.g., Sentinel-1 SAR).
 4. **Zero-Asterisk Presentation**: Natural language answers must be rendered in pure typography with zero raw markdown syntax artifacts (`**bold**`), clean badges, and interactive side-by-side swipe views.
@@ -158,18 +158,18 @@ We separate **High-Level Semantic Reasoning** from **Low-Level Deterministic Com
   - **Data Fetching & Cache**: Powered by `@tanstack/react-query` with a 5-minute stale-time cache, eliminating redundant backend network roundtrips when toggling between benchmark scenarios.
   - **Interactive Canvas Engine (`ImageCanvas.jsx`)**:
     - Features a 3-way view toggle:
-      1. `Raw Satellite Raster`: Renders pure original sensor pixels ($I_{	ext{raw}}$) with zero overlay artifacts.
+      1. `Raw Satellite Raster`: Renders pure original sensor pixels ($I_{\text{raw}}$) with zero overlay artifacts.
       2. `Analytical Mask Overlay`: Renders segmented polygons, color-coded land-cover masks, and normalized target bounding boxes.
       3. `Split Swipe View`: An interactive split-screen slider allowing judges to smoothly drag a vertical divider across the image, inspecting the raw sensor imagery on the left against the computer vision segmentation on the right.
-    - Floating high-contrast **Map Legend** dynamically binds to detected physical classes (Specular Water $ightarrow$ Neon Cyan; Forest $ightarrow$ Emerald; Built-Up $ightarrow$ Amber; Change $ightarrow$ Crimson).
-    - Canvas metadata header displaying acquisition platform (Sentinel-1 C-SAR / Sentinel-2A MSI), nominal GSD ($10.0	ext{m/px}$), total surface area ($26.214	ext{ km}^2$), geographic coordinates, and data sourcing (Copernicus / ISRO Bhuvan).
+    - Floating high-contrast **Map Legend** dynamically binds to detected physical classes (Specular Water $\rightarrow$ Neon Cyan; Forest $\rightarrow$ Emerald; Built-Up $\rightarrow$ Amber; Change $\rightarrow$ Crimson).
+    - Canvas metadata header displaying acquisition platform (Sentinel-1 C-SAR / Sentinel-2A MSI), nominal GSD ($10.0\text{m/px}$), total surface area ($26.214\text{ km}^2$), geographic coordinates, and data sourcing (Copernicus / ISRO Bhuvan).
   - **Collapsible Ingestion Studio (`SmartIngestStudio.jsx`)**:
     - Auto-collapses into a compact 48px status bar once results are generated, keeping the image canvas and analytical inspector above the fold on desktop monitors.
     - Broad file type support: Accepts `.tif`, `.tiff`, `.png`, `.jpg`, `.jpeg`, `.webp`, and mobile formats.
     - Pre-Scan Diagnostics: Ingests rasters and calls `/api/prescan` in `<20ms`, displaying sensor diagnostics (speckle noise distribution, channel variance, and cross-modal hints) before the user even triggers query analysis.
   - **Deep Engineering Inspector (`ResultInspector.jsx`)**:
     - **Overview Tab**: Clean formatted natural language answer (custom markdown parser stripping raw `**` asterisks), confidence derivation card, and 100% normalized area progress bars.
-    - **Band Telemetry Tab**: Per-channel radiometric table ($B_{\min}, B_{\max}, B_{\mu}, B_{\sigma}, 	ext{SNR}_{	ext{dB}}, 	ext{Entropy}$), Ground Sampling Distance, and geodetic area.
+    - **Band Telemetry Tab**: Per-channel radiometric table ($B_{\min}, B_{\max}, B_{\mu}, B_{\sigma}, \text{SNR}_{\text{dB}}, \text{Entropy}$), Ground Sampling Distance, and geodetic area.
     - **Radar Physics / Spectral Indices Tab**: Calibrated backscatter cross-sections ($\sigma^0$ in dB for water, terrain, and double-bounce), Equivalent Number of Looks ($ENL$), river sinuosity, hydraulic width, and NDVI/NDWI metrics.
     - **Raw Audit Matrix Tab**: Formatted JSON data tree with a 1-click clipboard copy utility for engineering verification.
   - **React Error Boundary (`ErrorBoundary.jsx`)**:
@@ -178,34 +178,34 @@ We separate **High-Level Semantic Reasoning** from **Low-Level Deterministic Com
 ### 2.2 Component 2: Geospatial Preflight, Raster I/O & Dynamic Alignment
 * **Files**: `backend/app/geospatial/raster_io.py`, `backend/app/geospatial/validation.py`.
 * **Technical Specifications**:
-  - `load_raster(source)`: Ingests raw bytes from multipart uploads. Converts arrays to normalized `uint8` 3-channel tensors ($H 	imes W 	imes C$) using Pillow (`PIL.Image`). Extracts spatial dimensions ($W, H$), band count ($C$), coordinate reference system (`EPSG:4326 / EPSG:32643`), and nominal Ground Sampling Distance ($10.0	ext{m}$).
+  - `load_raster(source)`: Ingests raw bytes from multipart uploads. Converts arrays to normalized `uint8` 3-channel tensors ($H \times W \times C$) using Pillow (`PIL.Image`). Extracts spatial dimensions ($W, H$), band count ($C$), coordinate reference system (`EPSG:4326 / EPSG:32643`), and nominal Ground Sampling Distance ($10.0\text{m}$).
   - `array_to_base64_png(arr)`: Encodes numpy image arrays into RFC 2397 compliant `data:image/png;base64` URIs for zero-latency DOM rendering without intermediate disk I/O.
   - `encode_mask_overlay(base_arr, mask, color, alpha)`: Blends binary computer vision masks onto raw imagery using linear alpha compositing:
-    $$I_{	ext{overlay}}(x, y) = (1 - lpha) \cdot I_{	ext{base}}(x, y) + lpha \cdot C_{	ext{mask}}$$
-    where $lpha = 0.45$, preserving background texture under the analytical mask.
-  - `validate_inputs(images, expected_count, modality)`: Verifies image counts against task expectations, enforces minimum dimension constraints ($H, W \ge 32	ext{ px}$), and performs **Dynamic Spatial Alignment**:
-    - If a user uploads two companion images of slightly differing resolutions (e.g., $512 	imes 512$ vs $600 	imes 600$), the validator automatically resamples Companion Image 2 to match Image 1's dimensions via bilinear interpolation (`cv2.INTER_LINEAR`), setting `"auto_resampled": True` rather than throwing a validation error.
+    $$I_{\text{overlay}}(x, y) = (1 - \alpha) \cdot I_{\text{base}}(x, y) + \alpha \cdot C_{\text{mask}}$$
+    where $\alpha = 0.45$, preserving background texture under the analytical mask.
+  - `validate_inputs(images, expected_count, modality)`: Verifies image counts against task expectations, enforces minimum dimension constraints ($H, W \ge 32\text{ px}$), and performs **Dynamic Spatial Alignment**:
+    - If a user uploads two companion images of slightly differing resolutions (e.g., $512 \times 512$ vs $600 \times 600$), the validator automatically resamples Companion Image 2 to match Image 1's dimensions via bilinear interpolation (`cv2.INTER_LINEAR`), setting `"auto_resampled": True` rather than throwing a validation error.
 
 ### 2.3 Component 3: Automated Sensor Modality & Physical Diagnostic Engine
 * **Files**: `backend/app/geospatial/modality_detector.py`.
 * **Technical Specifications**:
   - Automatically identifies whether an uploaded image is **Optical Multispectral (Sentinel-2 / Landsat)** or **Synthetic Aperture Radar (Sentinel-1 C-SAR)** without relying on EXIF metadata.
   - **Inter-Channel Spectral Disparity**:
-    $$\Delta(R, G, B) = rac{1}{N} \sum_{i=1}^N \left( |R_i - G_i| + |G_i - B_i| + |B_i - R_i| ight)$$
+    $$\Delta(R, G, B) = \frac{1}{N} \sum_{i=1}^N \left( |R_i - G_i| + |G_i - B_i| + |B_i - R_i| \right)$$
     If $\Delta(R, G, B) < 1.5$ or channel count $C = 1$, the raster is diagnosed as single-channel microwave radar amplitude (`SAR_RADAR`). Otherwise, it is diagnosed as visible multispectral reflectance (`OPTICAL_RGB`).
   - **Speckle Index ($C_v$)**:
-    $$C_v = rac{\sigma_{	ext{gray}}}{\mu_{	ext{gray}} + \epsilon}$$
-    Sentinel-1 C-band Level-1 GRD imagery displays high speckle variance ($C_v pprox 0.45 - 0.65$), whereas optical scenes exhibit smooth gradients.
+    $$C_v = \frac{\sigma_{\text{gray}}}{\mu_{\text{gray}} + \epsilon}$$
+    Sentinel-1 C-band Level-1 GRD imagery displays high speckle variance ($C_v \approx 0.45 - 0.65$), whereas optical scenes exhibit smooth gradients.
   - **Radiometric Engineering Telemetry (`compute_band_stats`)**:
     - **Signal-to-Noise Ratio (SNR in dB)**:
-      $$	ext{SNR}_{	ext{dB}} = 20 \log_{10} \left( \max\left(10^{-3}, rac{\mu}{\sigma + 10^{-5}}ight) ight)$$
+      $$\text{SNR}_{\text{dB}} = 20 \log_{10} \left( \max\left(10^{-3}, \frac{\mu}{\sigma + 10^{-5}}\right) \right)$$
     - **Shannon Information Entropy**:
       $$H = - \sum_{k=1}^{64} p(k) \log_2 p(k)$$
       Measures radiometric information density across 64 histogram bins.
   - **Radar Physical Backscatter Partitioning**:
-    - Specular Null Return (Water / River): Gray level $< 42$ ($\sigma^0 < -18	ext{ dB}$).
-    - Diffuse Rough Terrain (Canopy / Soil): $42 \le 	ext{Gray} \le 140$ ($\sigma^0 pprox -12	ext{ dB}$).
-    - Dihedral Double-Bounce Structures (Built-Up / Urban): Gray level $> 140$ ($\sigma^0 > -4	ext{ dB}$).
+    - Specular Null Return (Water / River): Gray level $< 42$ ($\sigma^0 < -18\text{ dB}$).
+    - Diffuse Rough Terrain (Canopy / Soil): $42 \le \text{Gray} \le 140$ ($\sigma^0 \approx -12\text{ dB}$).
+    - Dihedral Double-Bounce Structures (Built-Up / Urban): Gray level $> 140$ ($\sigma^0 > -4\text{ dB}$).
   - **Sensor Derivation Trace**: Generates human-readable scientific justification explaining how sensor family was identified from radiometric distribution.
 
 ### 2.4 Component 4: Agentic Semantic Reasoner & Decoupled Dispatcher
@@ -214,10 +214,10 @@ We separate **High-Level Semantic Reasoning** from **Low-Level Deterministic Com
   - Decouples user natural language intent from mathematical CV execution.
   - `classify_query(query, image_count, detected_modalities)`:
     - Parses natural language tokens to identify task archetype:
-      - `"grounding"` / `"locate"` / `"detect"` / `"find"` $ightarrow$ `GROUNDING` (`grounding_tool`).
-      - `"change"` / `"difference"` / `"expansion"` with 2 images $ightarrow$ `TEMPORAL_CHANGE` / `CHANGE_VQA` (`change_detection_tool`).
-      - `"fusion"` / `"radar and optical"` with mixed sensors $ightarrow$ `OPTICAL_SAR_FUSION` (`optical_sar_fusion_tool`).
-      - Default $ightarrow$ `SINGLE_VQA` (`single_vqa_tool`).
+      - `"grounding"` / `"locate"` / `"detect"` / `"find"` $\rightarrow$ `GROUNDING` (`grounding_tool`).
+      - `"change"` / `"difference"` / `"expansion"` with 2 images $\rightarrow$ `TEMPORAL_CHANGE` / `CHANGE_VQA` (`change_detection_tool`).
+      - `"fusion"` / `"radar and optical"` with mixed sensors $\rightarrow$ `OPTICAL_SAR_FUSION` (`optical_sar_fusion_tool`).
+      - Default $\rightarrow$ `SINGLE_VQA` (`single_vqa_tool`).
     - Extracts target entity (`"water"`, `"river"`, `"forest"`, `"built-up"`, `"urban"`).
   - `AgentTrace` (`trace.py`):
     - Records timestamped execution steps with millisecond latency tracking.
@@ -235,15 +235,15 @@ We separate **High-Level Semantic Reasoning** from **Low-Level Deterministic Com
   - **SAR Radar Path**:
     - Identifies river channel geometry via specular reflection nulls.
     - Calculates hydrological metrics: River channel length in kilometers, mean hydraulic width in meters, and river sinuosity index:
-      $$	ext{Sinuosity} = rac{	ext{Curvilinear Channel Length}}{	ext{Euclidean Valley Distance}}$$
+      $$\text{Sinuosity} = \frac{\text{Curvilinear Channel Length}}{\text{Euclidean Valley Distance}}$$
     - Explains radar physics: Calm water acts as a specular mirror reflecting microwave energy away from the satellite antenna; caveats acknowledging smooth dry runways or wind-roughened Bragg waves.
   - **Optical Multispectral Path**:
     - Computes vegetation canopy coverage via Pseudo-NDVI:
-      $$	ext{NDVI}_{	ext{pseudo}} = rac{G - R}{G + R + 10^{-5}}$$
+      $$\text{NDVI}_{\text{pseudo}} = \frac{G - R}{G + R + 10^{-5}}$$
     - Computes water presence via Pseudo-NDWI:
-      $$	ext{NDWI}_{	ext{pseudo}} = rac{G - B}{G + B + 10^{-5}}$$
+      $$\text{NDWI}_{\text{pseudo}} = \frac{G - B}{G + B + 10^{-5}}$$
     - Evaluates total area using exact Ground Sampling Distance (GSD):
-      $$	ext{Total Area} = rac{N_{	ext{pixels}} \cdot (	ext{GSD})^2}{10^6} = rac{512 	imes 512 	imes 100}{10^6} = 26.214	ext{ km}^2$$
+      $$\text{Total Area} = \frac{N_{\text{pixels}} \cdot (\text{GSD})^2}{10^6} = \frac{512 \times 512 \times 100}{10^6} = 26.214\text{ km}^2$$
   - **Calibrated Atmospheric Cloud Screening**:
     - Detects saturated cloud pixels ($R > 210, G > 210, B > 210$).
     - If cloud fraction exceeds **70%**, triggers immediate calibrated refusal: Sets `insufficient_evidence: True`, drops confidence to **38.0%**, and returns:
@@ -258,11 +258,11 @@ We separate **High-Level Semantic Reasoning** from **Low-Level Deterministic Com
     $$\sigma_B^2(t) = \omega_0(t) \omega_1(t) [\mu_0(t) - \mu_1(t)]^2$$
     Finding optimal threshold $t^*$ maximizing inter-class variance without manual tuning.
   - **Morphological Post-Processing**:
-    - Morphological Opening (Erosion followed by Dilation with $3 	imes 3$ kernel) removes single-pixel noise.
+    - Morphological Opening (Erosion followed by Dilation with $3 \times 3$ kernel) removes single-pixel noise.
     - Morphological Dilation joins adjacent fractured target parcels.
   - **Minimum Mapping Unit (MMU) Filter**:
     - Contour extraction (`cv2.findContours`).
-    - Enforces physical threshold: Discards any contour with pixel area $< 5	ext{ px}$ ($< 500	ext{ m}^2$ at 10m GSD), eliminating sensor noise artifacts.
+    - Enforces physical threshold: Discards any contour with pixel area $< 5\text{ px}$ ($< 500\text{ m}^2$ at 10m GSD), eliminating sensor noise artifacts.
   - **Coordinate Normalization**: Normalizes bounding boxes to $[0, 1000]$ integer format: `[ymin, xmin, ymax, xmax]`, compatible with international GIS web view standards.
 
 ### 2.7 Component 7: Bi-Temporal Change Detection & Transition Heatmap Engine
@@ -271,15 +271,15 @@ We separate **High-Level Semantic Reasoning** from **Low-Level Deterministic Com
   - Ingests two co-registered rasters acquired over the same geographic scene at Time 1 ($T_1$) and Time 2 ($T_2$).
   - **Radiometric Normalization & Differencing**:
     - Computes absolute spectral difference:
-      $$\Delta I(x, y) = rac{1}{3} \sum_{c \in \{R,G,B\}} |I_{T_2}(x, y, c) - I_{T_1}(x, y, c)|$$
+      $$\Delta I(x, y) = \frac{1}{3} \sum_{c \in \{R,G,B\}} |I_{T_2}(x, y, c) - I_{T_1}(x, y, c)|$$
   - **Adaptive Thresholding**:
     - Applies Otsu's algorithm on $\Delta I$ to isolate statistically significant surface transitions from seasonal solar zenith illumination variations.
   - **Land-Cover Transition Matrix**:
     - Classifies $T_1$ and $T_2$ into baseline classes (Vegetation, Built-Up, Water, Bare Soil).
-    - Quantifies directional conversions: e.g., Vegetation $ightarrow$ Built-Up (Urbanization/Encroachment); Vegetation $ightarrow$ Water (Flooding).
+    - Quantifies directional conversions: e.g., Vegetation $\rightarrow$ Built-Up (Urbanization/Encroachment); Vegetation $\rightarrow$ Water (Flooding).
   - **Heatmap Rendering**:
     - Synthesizes an alpha-blended crimson change heatmap overlay highlighting exact spatial boundaries of alteration.
-    - Quantifies exact transition percentage (e.g., **6.35% surface alteration / $1.66	ext{ km}^2$**).
+    - Quantifies exact transition percentage (e.g., **6.35% surface alteration / $1.66\text{ km}^2$**).
 
 ### 2.8 Component 8: Cross-Modal Optical + SAR Cloud-Penetrating Fusion Engine
 * **Files**: `backend/app/tools/optical_sar.py`.
@@ -287,26 +287,25 @@ We separate **High-Level Semantic Reasoning** from **Low-Level Deterministic Com
   - Implements **Decision-Level Multi-Sensor Fusion**.
   - **The Remote Sensing Challenge**: In tropical monsoon regions, optical sensors are blinded by cloud cover, and cloud shadows look deceptively dark like water bodies. SAR penetrates clouds, but smooth airport runways or dry asphalt also look dark like water.
   - **The Cross-Modal Fusion Algorithm**:
-    1. SAR Stream: Identifies microwave specular reflection ($\sigma^0 < -18	ext{ dB}$, threshold $< 42$) to map true dielectric water boundaries through clouds.
-    2. SAR Stream: Identifies dihedral double-bounce structural returns ($\sigma^0 > -4	ext{ dB}$, threshold $> 140$) to map urban buildings.
+    1. SAR Stream: Identifies microwave specular reflection ($\sigma^0 < -18\text{ dB}$, threshold $< 42$) to map true dielectric water boundaries through clouds.
+    2. SAR Stream: Identifies dihedral double-bounce structural returns ($\sigma^0 > -4\text{ dB}$, threshold $> 140$) to map urban buildings.
     3. Optical Stream: Identifies cloud-free photosynthetic vegetation canopy ($G > R$).
     4. Fusion Logic:
-       $$	ext{Water}_{	ext{confirmed}} = 	ext{SAR}_{	ext{specular}} \land 
-eg 	ext{Optical}_{	ext{shadow}}$$
-       $$	ext{Built-Up}_{	ext{confirmed}} = 	ext{SAR}_{	ext{double-bounce}} \lor 	ext{Optical}_{	ext{urban}}$$
+       $$\text{Water}_{\text{confirmed}} = \text{SAR}_{\text{specular}} \land \neg \text{Optical}_{\text{shadow}}$$
+       $$\text{Built-Up}_{\text{confirmed}} = \text{SAR}_{\text{double-bounce}} \lor \text{Optical}_{\text{urban}}$$
     5. Disambiguates cloud shadows: A dark patch in optical that exhibits rough diffuse backscatter in SAR is flagged as a cloud shadow, NOT water.
 
 ### 2.9 Component 9: Empirical Uncertainty & Mathematical Confidence Derivation Engine
 * **Files**: `backend/app/evidence/confidence.py`.
 * **Technical Specifications**:
   - Replaces black-box generative confidence scores with a deterministic, mathematically auditable formula:
-    $$S_{	ext{confidence}} = w_{	ext{base}} + w_{	ext{otsu}} \cdot \eta + w_{	ext{compact}} \cdot Q + w_{	ext{snr}} \cdot 	ext{SNR}_{	ext{norm}} + w_{	ext{modality}} \cdot \mathcal{M}$$
+    $$S_{\text{confidence}} = w_{\text{base}} + w_{\text{otsu}} \cdot \eta + w_{\text{compact}} \cdot Q + w_{\text{snr}} \cdot \text{SNR}_{\text{norm}} + w_{\text{modality}} \cdot \mathcal{M}$$
   - **Metric 1: Otsu Separability Index ($\eta$)**:
-    $$\eta = rac{\sigma_B^2}{\sigma_T^2} \in [0, 1]$$
+    $$\eta = \frac{\sigma_B^2}{\sigma_T^2} \in [0, 1]$$
     Measures the bimodal quality of the class separation. High $\eta \ge 0.85$ indicates clean feature boundaries.
   - **Metric 2: Isoperimetric Spatial Compactness ($Q$)**:
-    $$Q = rac{4\pi \cdot 	ext{Area}}{	ext{Perimeter}^2} \in [0, 1]$$
-    Measures geometric contiguity. Natural water bodies and agricultural parcels exhibit continuous boundaries ($Q \ge 0.70$), whereas random noise exhibits fragmented perimeters ($Q 	o 0$).
+    $$Q = \frac{4\pi \cdot \text{Area}}{\text{Perimeter}^2} \in [0, 1]$$
+    Measures geometric contiguity. Natural water bodies and agricultural parcels exhibit continuous boundaries ($Q \ge 0.70$), whereas random noise exhibits fragmented perimeters ($Q \to 0$).
   - **Metric 3: Radiometric Dynamic Range / SNR**:
     Verifies that sensor signal dynamic range is unclipped across $[0, 255]$.
   - **Metric 4: Cross-Sensor Orthogonality ($\mathcal{M}$)**:
@@ -334,7 +333,7 @@ eg 	ext{Optical}_{	ext{shadow}}$$
 * **Files**: `backend/app/api/demos.py`, `scripts/generate_realistic_imagery.py`, `scripts/test_all_demos.py`.
 * **Technical Specifications**:
   - Seven pre-configured, peer-reviewed evaluation benchmarks covering all SIH problem requirements:
-    1. **Demo 1 (Optical Land-Cover VQA)**: Sentinel-2A MSI Level-2A over Chilika Lake & Mahanadi Delta, Odisha. 55.62% Forest canopy ($14.58	ext{ km}^2$), 19.38% water body ($5.08	ext{ km}^2$).
+    1. **Demo 1 (Optical Land-Cover VQA)**: Sentinel-2A MSI Level-2A over Chilika Lake & Mahanadi Delta, Odisha. 55.62% Forest canopy ($14.58\text{ km}^2$), 19.38% water body ($5.08\text{ km}^2$).
     2. **Demo 1-SAR (Radar Ingestion & River Detection)**: Sentinel-1 C-SAR IW. Demonstrates correct specular microwave null detection of the river corridor with 0% optical confusion.
     3. **Demo 2 (Text-Guided Grounding)**: Localizes candidate water regions with 10 deterministic bounding boxes and MMU filtering.
     4. **Demo 3 (Bi-Temporal Change Heatmap)**: Measures 6.35% surface alteration between $T_1$ and $T_2$ due to logistics/industrial expansion.

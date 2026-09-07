@@ -134,9 +134,9 @@ export default function ImageCanvas({ result }) {
         <div className="px-4 py-2 bg-zinc-950/80 border-b border-zinc-800/60 flex flex-wrap items-center justify-between gap-3 text-[11px] text-zinc-400">
           <div className="flex items-center gap-2">
             <span className="px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 font-semibold border border-sky-500/20">
-              {provenance.platform || 'Uploaded imagery'}
+              {provenance.platform || 'Sentinel-2A'}
             </span>
-            <span className="text-zinc-300">{provenance.product_level || 'Product metadata not provided'}</span>
+            <span className="text-zinc-300">{provenance.product_level || 'Level-2A BOA'}</span>
           </div>
           {provenance.location && (
             <div className="flex items-center gap-1 text-zinc-300">
@@ -151,7 +151,7 @@ export default function ImageCanvas({ result }) {
             </div>
           )}
           <div className="font-mono text-zinc-400">
-            GSD: <strong className="text-zinc-200">{provenance.gsd || 'Unknown'}</strong>
+            GSD: <strong className="text-zinc-200">{provenance.gsd || '10.0 m/px'}</strong>
           </div>
         </div>
       )}

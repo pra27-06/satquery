@@ -1,10 +1,10 @@
 # part1_architecture.py
 
 def get_part1():
-    return """# SATQUERY AI: COMPREHENSIVE TECHNICAL ARCHITECTURE & 100-QUESTION JUDGES DEFENSE MANUAL
+    return r"""# SATQUERY AI: COMPREHENSIVE TECHNICAL ARCHITECTURE & 100-QUESTION JUDGES DEFENSE MANUAL
 ### Official Technical Specification, Physical Derivations, and Defense Guide for Smart India Hackathon (SIH26167 — ISRO Problem Statement)
 
-**Authors / System Architects:** Tanmay Jain & Core Engineering Team  
+**Authors / System Architects:** Prachi Bhalla & Core Engineering Team  
 **Affiliation:** SatQuery AI — Neuro-Symbolic Remote Sensing & Geospatial Intelligence Platform  
 **Target Organization:** Indian Space Research Organisation (ISRO) / National Remote Sensing Centre (NRSC) / Department of Space  
 **Problem Statement Code:** SIH26167 — Natural Language Question Answering and Semantic Information Retrieval over Multi-Modal Satellite Imagery  
