@@ -2,8 +2,7 @@
 demos.py
 --------
 Pre-packaged SIH26167 evaluation demo scenarios for 1-click execution.
-Includes authentic Sentinel-1 and Sentinel-2 acquisitions with full geospatial provenance,
-plus an explicit 'Cannot Confirm' insufficient evidence benchmark.
+Includes packaged demonstration scenarios. Unless a scenario explicitly points to independently verified source imagery, its provenance is not asserted as satellite metadata.
 """
 
 from typing import List, Dict, Any
@@ -18,7 +17,7 @@ router = APIRouter()
 DEMO_SCENARIOS = [
     {
         "id": "demo-1",
-        "title": "Demo 1: Real Sentinel-2 Scene",
+        "title": "Demo 1: Optical RGB Demonstration",
         "subtitle": "Chilika Lake & Mahanadi Delta, Odisha (Multispectral Land-Cover)",
         "query": "Describe the land-cover distribution and major hydrological and agricultural features in this scene.",
         "modality": "Single Optical (Sentinel-2A MSI)",
@@ -32,12 +31,12 @@ DEMO_SCENARIOS = [
             "acquisition_date": "2024-03-15",
             "gsd": "10.0 m/pixel",
             "data_source": "ESA Copernicus Open Access Hub / ISRO Bhuvan",
-            "status": "Authentic Earth Observation Acquisition"
+            "status": "Demo scenario — source metadata not embedded in PNG"
         }
     },
     {
         "id": "demo-sar",
-        "title": "Demo 2: Real Sentinel-1 SAR Radar",
+        "title": "Demo 2: Single-Band SAR-Like Demonstration",
         "subtitle": "C-band Specular Low-Backscatter River & Dihedral Structures",
         "query": "What is the dominant land cover, and is there an active river corridor visible in this radar image?",
         "modality": "Single SAR (Sentinel-1 C-Band)",
@@ -52,12 +51,12 @@ DEMO_SCENARIOS = [
             "acquisition_date": "2024-03-18",
             "gsd": "10.0 m/pixel",
             "data_source": "ESA Copernicus Sentinel-1 Mission",
-            "status": "Authentic Synthetic Aperture Radar"
+            "status": "Demo scenario — sensor identity not verified from PNG"
         }
     },
     {
         "id": "demo-2",
-        "title": "Demo 3: Text-Guided Grounding",
+        "title": "Demo 3: Text-Guided Grounding Demonstration",
         "subtitle": "Spatial Bounding Box Localization (RSVQA Benchmark)",
         "query": "Highlight and bound the agricultural parcel regions and water channels in this scene.",
         "modality": "Single Optical (RSVQA)",
@@ -70,12 +69,12 @@ DEMO_SCENARIOS = [
             "acquisition_date": "2023-08-12",
             "gsd": "10.0 m/pixel",
             "data_source": "RSVQA Remote Sensing Benchmark / ESA",
-            "status": "Verified Grounding Benchmark Tile"
+            "status": "Demo scenario — benchmark provenance must be verified separately"
         }
     },
     {
         "id": "demo-3",
-        "title": "Demo 4: Bi-Temporal Surface Change",
+        "title": "Demo 4: Bi-Temporal Change Demonstration",
         "subtitle": "Differential Normalized Heatmap Mapping (T1 vs T2)",
         "query": "What changed between these two dates, and where did the transformation occur?",
         "modality": "Bi-Temporal Pair (T1 & T2)",
@@ -88,12 +87,12 @@ DEMO_SCENARIOS = [
             "acquisition_dates": "T1: 2022-04-10 | T2: 2024-04-12",
             "gsd": "10.0 m/pixel",
             "data_source": "Sentinel-2 Time Series Pipeline",
-            "status": "Calibrated Temporal Pair"
+            "status": "Demo scenario — geographic co-registration not verified"
         }
     },
     {
         "id": "demo-4",
-        "title": "Demo 5: Quantitative Change VQA",
+        "title": "Demo 5: Quantitative Change Demonstration",
         "subtitle": "Surface Area Quantification of Urban Expansion",
         "query": "Has the built-up area increased, decreased, or remained unchanged?",
         "modality": "Bi-Temporal Pair (T1 & T2)",
@@ -111,7 +110,7 @@ DEMO_SCENARIOS = [
     },
     {
         "id": "demo-5",
-        "title": "Demo 6: Cross-Modal Optical + SAR Fusion",
+        "title": "Demo 6: Optical + SAR-Like Fusion Demonstration",
         "subtitle": "Optical Multispectral + Radar Penetration",
         "query": "Use the optical and SAR images together to identify built-up and water-covered regions.",
         "modality": "Co-registered Optical + SAR",
@@ -124,12 +123,12 @@ DEMO_SCENARIOS = [
             "acquisition_dates": "Optical: 2024-03-15 | Radar: 2024-03-18",
             "gsd": "10.0 m/pixel (Standard Grid)",
             "data_source": "Copernicus Multi-Mission Constellation",
-            "status": "Co-Registered Multimodal Pair"
+            "status": "Demo scenario — geographic co-registration not verified"
         }
     },
     {
         "id": "demo-cloud-refusal",
-        "title": "Demo 7: Cloud Obscuration Refusal",
+        "title": "Demo 7: Cloud Obscuration / Insufficient Evidence",
         "subtitle": "Calibrated 'Cannot Confirm' Benchmark (Insufficient Evidence)",
         "query": "Detect the ground river channel and quantify settlement footprints under this cloud cover.",
         "modality": "Single Optical (75% Cloud Saturated)",
@@ -142,7 +141,7 @@ DEMO_SCENARIOS = [
             "acquisition_date": "2024-07-22",
             "gsd": "10.0 m/pixel",
             "data_source": "ESA Copernicus Open Access Hub",
-            "status": "Calibrated Refusal Benchmark Scene"
+            "status": "Demo scenario — insufficient-evidence demonstration"
         }
     }
 ]
