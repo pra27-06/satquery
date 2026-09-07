@@ -70,7 +70,7 @@ def run_single_vqa(img: np.ndarray, query: str) -> Dict[str, Any]:
                 f"**Image evidence:** The prototype identifies dark regions using an intensity threshold (< 42 on the uploaded 8-bit raster). "
                 f"This is a SAR-like heuristic; it is not calibrated Sentinel-1 sigma-naught (σ⁰).\n\n"
                 f"**Physical limitation:** Smooth water can produce low radar return, but other dark surfaces can look similar. "
-                f"Sensor identity, polarization, GSD and physical area are not verified from a PNG/JPEG upload.
+                f"Sensor identity, polarization, GSD and physical area are not verified from a PNG/JPEG upload."
             )
         elif "urban" in q_lower or "building" in q_lower or "structure" in q_lower:
             answer = (
