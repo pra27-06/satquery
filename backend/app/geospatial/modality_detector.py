@@ -85,24 +85,21 @@ def detect_modality(img: np.ndarray) -> Dict[str, Any]:
     # Check if grayscale (or identical RGB channels)
     is_single_band_or_gray = (c == 1) or (channel_diff < 1.5)
     
-    # Spatial Metrics (Sentinel constellation standard: 10m GSD)
+    # Spatial metrics are intentionally left unquantified for PNG/JPEG uploads.
+    # A physical area requires trusted GSD/CRS metadata from a GeoTIFF or source product.
     gsd_meters = None
-    pixel_area_m2 = None
     total_area_km2 = None
     total_hectares = None
 
-    # Radar Physics Feature Extraction
+    # Prototype radar-like intensity zones. These are pixel percentages only.
     water_mask = (gray < 42)
     water_pct = round(float(np.sum(water_mask) / total_pixels * 100), 2)
-    water_area_km2 = round((water_pct / 100) * total_area_km2, 3)
     
     structure_mask = (gray > 140)
     structure_pct = round(float(np.sum(structure_mask) / total_pixels * 100), 2)
-    structure_area_km2 = round((structure_pct / 100) * total_area_km2, 3)
     
     terrain_mask = (~water_mask) & (~structure_mask)
     terrain_pct = round(float(np.sum(terrain_mask) / total_pixels * 100), 2)
-    terrain_area_km2 = round((terrain_pct / 100) * total_area_km2, 3)
 
     if is_single_band_or_gray:
         modality = "SAR_RADAR"
@@ -120,7 +117,7 @@ def detect_modality(img: np.ndarray) -> Dict[str, Any]:
         recommendations = []
         if has_river:
             recommendations.append(
-                f"Prominent water body / river corridor detected ({water_pct}% / {water_area_km2} km²) "
+                f"Prominent low-intensity water-like region detected ({water_pct}% of scene pixels) "
                 f"via low radar backscatter consistent with specular reflection away from the satellite sensor. "
                 f"(Physical note: Smooth water acts as a specular reflector directing microwave energy away from the radar antenna. "
                 f"Note that other flat smooth surfaces—such as airport runways or dry sands—can exhibit similar low backscatter, "
@@ -128,7 +125,7 @@ def detect_modality(img: np.ndarray) -> Dict[str, Any]:
             )
         if has_urban:
             recommendations.append(
-                f"Elevated microwave backscatter detected ({structure_pct}% / {structure_area_km2} km²), "
+                f"Elevated intensity region detected ({structure_pct}% of scene pixels), "
                 f"consistent with dihedral corner-reflector interactions between orthogonal structural walls and the ground plane."
             )
             
@@ -155,7 +152,7 @@ def detect_modality(img: np.ndarray) -> Dict[str, Any]:
         is_radar = False
         
         recommendations = [
-            f"Multispectral visible color channels detected ({total_area_km2} km² coverage). Optimal for land-cover classification, vegetation indices, and visual QA."
+            "Three-channel RGB-like optical imagery detected. Suitable for visual land-cover heuristics; physical area and multispectral indices require trusted source metadata/bands."
         ]
         missing_modalities = [
             {
