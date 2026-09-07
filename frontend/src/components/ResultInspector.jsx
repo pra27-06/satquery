@@ -168,17 +168,7 @@ export default function ResultInspector({ result }) {
           )}
         </button>
 
-        <button
-          onClick={() => setActiveTab('raw')}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-lg transition border-b-2 ${
-            activeTab === 'raw'
-              ? 'border-sky-500 text-sky-400 bg-zinc-900/50'
-              : 'border-transparent text-zinc-400 hover:text-zinc-200'
-          }`}
-        >
-          <Cpu className="h-3.5 w-3.5" />
-          <span>Raw Audit Matrix</span>
-        </button>
+
       </div>
 
       {/* Tab Content Body */}
