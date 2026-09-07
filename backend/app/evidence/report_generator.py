@@ -27,8 +27,6 @@ def generate_evidence_report(
     timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
     report_id = f"SATQUERY-EVID-{session_id[:8].upper()}"
     
-    # Extract deep telemetry if available
-    eng_telemetry = tool_results.get("engineering_telemetry", {})
     modality_info = tool_results.get("modality_info", {})
     spatial_metrics = modality_info.get("spatial_metrics", {})
     band_telemetry = modality_info.get("band_telemetry", [])
@@ -43,7 +41,6 @@ def generate_evidence_report(
         "agentic_plan": classification,
         "input_validation": validation_info,
         "tool_results": {k: v for k, v in tool_results.items() if not k.endswith("_url")},
-        "engineering_telemetry": eng_telemetry,
         "confidence_audit": confidence,
         "execution_trace": trace_log
     }
@@ -66,7 +63,7 @@ def generate_evidence_report(
             </tr>
             """
             
-    # Render Spectral/Radar Distribution Table HTML
+    # Render surface feature distribution table HTML
     distribution_rows_html = ""
     spectral_dist = tool_results.get("spectral_distribution", {})
     for cls, pct in spectral_dist.items():
@@ -77,64 +74,6 @@ def generate_evidence_report(
         </tr>
         """
         
-    # Deep SAR or Optical summary block
-    radar_diag_html = ""
-    if eng_telemetry.get("calibrated_backscatter_sigma0_db"):
-        bs = eng_telemetry["calibrated_backscatter_sigma0_db"]
-        hg = eng_telemetry.get("hydrological_geometry", {})
-        radar_diag_html = f"""
-        <div class="card" style="border-left: 4px solid #06b6d4;">
-            <div class="field-label" style="color: #22d3ee;">Radar Physics & Calibrated Backscatter Telemetry</div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 12px;">
-                <div class="stat-box">
-                    <div class="stat-label">Specular Water σ⁰</div>
-                    <div class="stat-val" style="color: #38bdf8;">{bs.get('specular_water_mean')} dB</div>
-                    <div class="stat-sub">Threshold: {bs.get('specular_threshold_limit')} dB</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">Diffuse Terrain σ⁰</div>
-                    <div class="stat-val" style="color: #a1a1aa;">{bs.get('diffuse_terrain_mean')} dB</div>
-                    <div class="stat-sub">Rough surface scatter</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">Double-Bounce Assets σ⁰</div>
-                    <div class="stat-val" style="color: #f59e0b;">+{bs.get('double_bounce_structure_mean')} dB</div>
-                    <div class="stat-sub">Corner reflectors</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">Looks / Sinuosity</div>
-                    <div class="stat-val" style="color: #c084fc;">ENL: {eng_telemetry.get('equivalent_number_of_looks_enl')}</div>
-                    <div class="stat-sub">Sinuosity: {hg.get('sinuosity_index', '1.0')}</div>
-                </div>
-            </div>
-            {f"<div style='margin-top: 12px; font-size: 13px; color: #a1a1aa;'>Estimated River Corridor Length: <strong style='color:#fff;'>{hg.get('estimated_channel_length_km')} km</strong> · Mean Hydraulic Width: <strong style='color:#fff;'>{hg.get('mean_channel_width_m')} m</strong> · Water Area: <strong style='color:#fff;'>{hg.get('water_surface_area_km2')} km²</strong></div>" if hg else ""}
-        </div>
-        """
-    elif eng_telemetry.get("spectral_indices"):
-        si = eng_telemetry["spectral_indices"]
-        radar_diag_html = f"""
-        <div class="card" style="border-left: 4px solid #10b981;">
-            <div class="field-label" style="color: #34d399;">Optical Multispectral Index Telemetry</div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 12px;">
-                <div class="stat-box">
-                    <div class="stat-label">Mean NDVI</div>
-                    <div class="stat-val" style="color: #4ade80;">{si.get('ndvi_mean')}</div>
-                    <div class="stat-sub">Peak P90: {si.get('ndvi_p90_peak')}</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">Mean NDWI</div>
-                    <div class="stat-val" style="color: #38bdf8;">{si.get('ndwi_mean')}</div>
-                    <div class="stat-sub">Water index</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">Chlorophyll Absorption</div>
-                    <div class="stat-val" style="color: #fbbf24;">{si.get('canopy_chlorophyll_absorption_ratio')}x</div>
-                    <div class="stat-sub">Green/Red ratio</div>
-                </div>
-            </div>
-        </div>
-        """
-
     # Trace steps
     trace_rows = "".join(
         f"<tr><td>{s.get('step_id')}</td><td style='font-family:monospace; color:#38bdf8;'>+{s.get('timestamp_ms')}ms</td><td class='trace-tag'>[{s.get('stage')}]</td><td>{s.get('message')}</td></tr>"
