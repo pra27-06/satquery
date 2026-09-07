@@ -47,6 +47,8 @@ def validate_inputs(
         "image_count": len(images),
         "dimensions": f"{images[0].shape[1]}x{images[0].shape[0]}",
         "channels": images[0].shape[2] if images[0].ndim == 3 else 1,
-        "co_registered": True,
-        "auto_resampled": resampled
+        "co_registered": None,
+        "auto_resampled": resampled,
+        "alignment_status": "RESAMPLED_TO_COMMON_PIXEL_GRID" if resampled else "GEOGRAPHIC_ALIGNMENT_NOT_VERIFIED",
+        "validation_note": "Matching pixel dimensions do not prove geographic co-registration for PNG/JPEG MVP inputs."
     }
